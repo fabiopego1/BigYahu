@@ -16,6 +16,12 @@ namespace ProjectYahu.Models
         public long LastReviewUnix { get; init; }
         [JsonPropertyName("retainerName")]
         public string RetainerName { get; init; } = string.Empty;
+        
+        [JsonPropertyName("worldName")]
+        public string WorldName { get; init; } = string.Empty;
+        
+        [JsonPropertyName("worldID")]
+        public uint WorldId { get; init; }
 
         public DateTime LastReviewTime => DateTimeOffset.FromUnixTimeSeconds(LastReviewUnix).UtcDateTime;
     }

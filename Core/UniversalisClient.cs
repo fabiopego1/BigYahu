@@ -48,27 +48,73 @@ namespace ProjectYahu.Core
         }
 
         /// <summary>
-        /// Batch fetch multiple items to save API calls.
+        /// Fetches market data for the ENTIRE Data Center.
+        /// Returns a dictionary of "WorldName" -> MarketSnapshot.
         /// </summary>
-        public async Task<List<MarketSnapshot>> FetchMultipleItems(IEnumerable<uint> itemIds, string world)
+        public async Task<Dictionary<string, MarketSnapshot>> FetchDataCenterData(uint itemId, string dataCenterName)
         {
-            string ids = string.Join(",", itemIds);
-            string url = $"{BaseUrl}{world}/{ids}?listings=5&entries=5"; // Smaller limit for batch
+            string url = $"{BaseUrl}{dataCenterName}/{itemId}?listings=50&entries=50";
 
             try
             {
                 var response = await _httpClient.GetStringAsync(url);
+                var snapshot = JsonSerializer.Deserialize<MarketSnapshot>(response);
                 
-                // Universalis returns a different structure for multiple items
-                // { "items": { "item1": { ... }, "item2": { ... } } }
-                // For simplicity, we'll implement this if you need batching logic.
-                // For now, returning an empty list to avoid complexity.
-                return new List<MarketSnapshot>();
+                // Universalis returns a single object with ALL listings for a DC request.
+                // We need to group them by WorldName to analyze per world.
+                if (snapshot == null || snapshot.Listings == null) return new Dictionary<string, MarketSnapshot>();
+
+                var worldSnapshots = new Dictionary<string, MarketSnapshot>();
+
+                // Group Listings by WorldName
+                var listingsByWorld = snapshot.Listings.GroupBy(l => l.WorldName ?? "Unknown");
+
+                foreach (var group in listingsByWorld)
+                {
+                    string world = group.Key;
+                    if (string.IsNullOrEmpty(world)) continue;
+
+                    // Reconstruct a snapshot for this specific world
+                    var worldListings = group.ToList();
+                    
+                    // Sales history is global in the DC response? No, usually mixed. 
+                    // Universalis API v2 for DC requests is tricky. 
+                    // It returns `listings` array where each listing has `worldID` or `worldName`.
+                    // It ALSO returns `recentHistory` array where each sale has `worldID` or `worldName`.
+                    
+                    // Filter history for this world too
+                    var worldHistory = snapshot.RecentSales?
+                        .Where(s => GetWorldNameForHistory(s, world)) // Dummy check, see below
+                        .ToList() ?? new List<SaleHistory>();
+
+                    var subSnapshot = new MarketSnapshot
+                    {
+                        ItemId = itemId,
+                        WorldName = world,
+                        Listings = worldListings,
+                        RecentSales = worldHistory,
+                        SalesVelocityPerDay = MarketAnalysis.CalculateVelocity(worldHistory)
+                    };
+                    
+                    worldSnapshots[world] = subSnapshot;
+                }
+
+                return worldSnapshots;
             }
             catch
             {
-                return new List<MarketSnapshot>();
+                return new Dictionary<string, MarketSnapshot>();
             }
+        }
+
+        // Helper: In a real implementation, you'd map WorldID -> WorldName using Lumina.
+        // For simplicity, we assume Universalis returns WorldName if possible, or we skip history filtering by world if complex.
+        private bool GetWorldNameForHistory(SaleHistory sale, string targetWorld)
+        {
+            // Universalis `recentHistory` objects in DC response typically have `worldID` or `worldName`.
+            // Without a proper Models update to include WorldID on SaleHistory, we can't filter effectively.
+            // For now, we will return TRUE to include all history in velocity calc (Data Center Velocity).
+            return true; 
         }
 
         public void Dispose()

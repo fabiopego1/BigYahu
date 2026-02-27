@@ -1,59 +1,57 @@
 # Project Yahu - The Quiet Wealth Architect
 
-Project Yahu is a fully functional **Dalamud Plugin Core** designed to automate market board pricing with "Quiet Wealth" tactics.
+Project Yahu is a powerful Dalamud plugin designed to automate market board pricing and identify cross-world arbitrage opportunities using "Quiet Wealth" tactics.
 
-**Status:** 🟢 **Real Game Data Ready**
-This codebase now includes a full implementation of `GameInventoryService` using `FFXIVClientStructs`, meaning it can read your actual in-game inventory without any mocking.
+**Status:** 🟢 **Release Candidate 1**
+-   **Full UI:** Now includes a dedicated ImGui window.
+-   **Real Data:** Scans your actual inventory.
+-   **Cross-World:** Finds profit across the entire Data Center.
 
-## 🚀 Installation Guide (The "Dummy-Proof" Version)
-
-Follow these steps to get Project Yahu running in your game:
+## 🚀 Installation Guide
 
 ### 1. Prerequisites
--   **Visual Studio 2022 Community** (with .NET Desktop Development workload).
+-   **Visual Studio 2022 Community** (with .NET Desktop Development).
 -   **XIVLauncher** (with Dalamud enabled).
 
-### 2. Set Up the Project
-1.  **Clone or Download** this repository.
-2.  Open the folder in **Visual Studio** (Double-click `ProjectYahu.csproj` or open Folder).
-    *   *Note: If you don't see a solution file (.sln), you can just open the .csproj directly.*
+### 2. Build & Install
+1.  **Clone** this repository.
+2.  Open `ProjectYahu.csproj` in Visual Studio.
+3.  **Build Solution** (F6).
+4.  In FFXIV, type `/xlsettings` -> **Experimental**.
+5.  Add the path to your built `ProjectYahu.dll`.
+6.  Click **Save**.
 
-### 3. Verify References
-The included `ProjectYahu.csproj` is already configured to pull the necessary dependencies:
--   `DalamudPackager`
--   `Newtonsoft.Json`
--   `FFXIVClientStructs` (for reading memory)
--   `Dalamud` & `Lumina` (from your local XIVLauncher installation)
+### 3. Usage
+Type `/yahu` in chat to open the interface.
 
-**Important:** You might need to adjust the `<DalamudLibPath>` in `ProjectYahu.csproj` if your XIVLauncher is installed in a non-standard location.
-Default: `$(appdata)\XIVLauncher\addon\Hooks\dev\`
+#### Tab 1: Market Analysis
+-   **Goal:** Optimize prices for items you already own.
+-   **How:** 
+    1.  Ensure items you want to sell are in your `Sell List` (see Configuration).
+    2.  Click **"Start Analysis"**.
+    3.  Review the table:
+        -   **Action:** Match, Undercut, or Fixed Price.
+        -   **Price:** The calculated optimal price.
+        -   **Stack:** Recommended stack size based on sales velocity.
 
-### 4. Build
-1.  Select **Debug** or **Release** configuration (Top bar).
-2.  Press **F6** or `Build -> Build Solution`.
-3.  Check the "Output" window. It should say **Build Succeeded**.
+#### Tab 2: Cross-World Arbitrage
+-   **Goal:** Find items cheap on other servers to resell on yours.
+-   **How:**
+    1.  Enter your **Data Center** (e.g., Aether).
+    2.  Click **"Scan DC"**.
+    3.  Review the table for green rows (High Margin > 20%).
 
-### 5. Load in FFXIV
-1.  Launch the game.
-2.  Type `/xlsettings` -> **Experimental**.
-3.  Add the path to your built DLL (e.g., `.../ProjectYahu/bin/Debug/net8.0-windows/ProjectYahu.dll`).
-4.  Click **Save**.
-
-### 6. Usage
-1.  **Configure:** Edit `Models/Configuration.cs` or the generated JSON to add items to your "Sell List". (Currently, no UI for adding items, you must edit the config file or code).
-2.  **Run:** Type `/yahu` in chat.
-3.  **Check Log:** Open `/xllog` to see the analysis:
-    ```
-    [Project Yahu] Scanned 150 items in your bags.
-    [YAHU] [LIST] Iron Ore: 3x stacks of 99 @ 150 gil (Match)
-    ```
+#### Tab 3: Configuration
+-   **Sell List:** Add items here by ID to track them.
+-   **Min Price:** Safety floor to prevent selling at a loss.
+-   **Target Margin:** Desired profit percentage.
 
 ## 🧠 Core Features
 
 -   **Real Inventory Scanning:** Uses `FFXIVClientStructs` to read your bag contents.
 -   **Outlier Detection (MAD):** Filters out market manipulation/bait.
 -   **Velocity Analysis:** Checks sales history to recommend stack sizes.
--   **Safe Pricing:** Never lists below your defined `MinPrice`.
+-   **Cross-World Comparison:** Fetches data for all worlds in your DC to find the best market.
 
 ## ⚠️ Disclaimer
-This is a **developer tool/core library**. While functional, it lacks a GUI for configuration. It is intended for developers who want to build upon the "Quiet Wealth" algorithm.
+This tool is for market analysis. Automating the actual posting process without user input may violate the Final Fantasy XIV Terms of Service. Use the data to make informed decisions manually.
